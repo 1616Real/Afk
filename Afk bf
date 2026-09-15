@@ -1,0 +1,14 @@
+@echo off
+title Roblox Anti-AFK (Running...)
+color 0A
+echo ==========================================
+echo    ROBLOX ANTI-AFK SCRIPT IS ACTIVE
+echo ==========================================
+echo [สถานะ] ระบบกำลังทำงานเพื่อป้องกันการเด้ง 20 นาที
+echo [คำเตือน] ห้ามปิดหน้าต่างนี้จนกว่าจะเลิกเล่นข้ามคืน
+echo.
+
+:loop
+powershell -command "$wscript = New-Object -ComObject Wscript.Shell; $wscript.SendKeys('{F15}')"
+timeout /t 180 /nobreak > nul
+goto loop
