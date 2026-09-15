@@ -1,0 +1,98 @@
+-- สร้าง ScreenGui และเมนูหลัก
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local ToggleButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UICornerBtn = Instance.new("UICorner")
+
+-- ตั้งค่าตำแหน่งและหน้าตา UI
+ScreenGui.Name = "SimpleAFKMenu"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+MainFrame.Position = UDim2.new(0.5, -100, 0.4, -60)
+MainFrame.Size = UDim2.new(0, 200, 0, 120)
+MainFrame.Active = true
+MainFrame.Draggable = true -- ทำให้ลากหน้าต่างไปมาได้
+
+UICorner.Parent = MainFrame
+UICorner.CornerRadius = UDim.new(0, 10)
+
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1.00
+Title.Size = UDim2.new(0, 200, 0, 40)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Roblox AFK Menu"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 16
+
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = MainFrame
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+ToggleButton.Position = UDim2.new(0.1, 0, 0.45, 0)
+ToggleButton.Size = UDim2.new(0, 160, 0, 45)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "เปิดใช้งาน AFK"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.TextSize = 14
+
+UICornerBtn.Parent = ToggleButton
+UICornerBtn.CornerRadius = UDim.new(0, 8)
+
+-- ระบบการทำงาน AFK
+local vu = game:GetService("VirtualUser")
+local localPlayer = game:GetService("Players").LocalPlayer
+local afkConnection = nil
+local isRunning = false
+
+local function startAFK()
+	if isRunning then return end
+	isRunning = true
+	
+	-- ป้องกันหน้าจอดับหรือถูกเตะเมื่อไม่ได้ขยับ
+	localPlayer.Idled:Connect(function()
+		if isRunning then
+			vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+			task.wait(1)
+			vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+		end
+	end)
+
+	-- ขยับมุมกล้องเล็กน้อยทุกๆ 3 นาที เพื่อรีเซ็ตสถานะ Idle ของเซิร์ฟเวอร์
+	afkConnection = task.spawn(function()
+		while isRunning do
+			task.repeatWait = task.wait(180) -- ทุก 3 นาที
+			local vim = game:GetService("VirtualInputManager")
+			vim:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+			task.wait(0.2)
+			vim:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+		end
+	end)
+	
+	ToggleButton.Text = "ปิดใช้งาน AFK"
+	ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end
+
+local function stopAFK()
+	isRunning = false
+	if afkConnection then
+		task.cancel(afkConnection)
+	end
+	ToggleButton.Text = "เปิดใช้งาน AFK"
+	ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 127)
+end
+
+-- กดปุ่มเพื่อสลับการทำงาน
+ToggleButton.MouseButton1Click:Connect(function()
+	if not isRunning then
+		startAFK()
+	else
+		stopAFK()
+	end
+end)
